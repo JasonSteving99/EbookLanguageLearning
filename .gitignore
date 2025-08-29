@@ -1,0 +1,24 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Copyrighted book content - exclude all book-derived data
+# Source EPUB files
+*.epub
+
+# Generated book content with full text
+documents/
+book/
+
+# Extracted images (covers, illustrations)
+images/
+
+# Language analysis data derived from books
+data/

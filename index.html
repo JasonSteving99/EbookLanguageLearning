@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Biblioteca de Aprendizaje de Español</title>
+    <link rel="stylesheet" href="styles/library.css">
+</head>
+<body>
+    <header class="library-header">
+        <h1>📚 Biblioteca de Aprendizaje de Español</h1>
+        <p>Colección interactiva de libros para el aprendizaje del español</p>
+    </header>
+
+    <main class="library-main">
+        <div class="books-grid" id="books-grid">
+            <!-- Books will be dynamically loaded here -->
+        </div>
+        
+        <div class="empty-library" id="empty-library" style="display: none;">
+            <h2>No se encontraron libros</h2>
+            <p>¡Agrega archivos EPUB para comenzar tu viaje de aprendizaje del español!</p>
+        </div>
+    </main>
+
+    <footer class="library-footer">
+        <p>Potenciado con análisis de palabras y lematización de spaCy</p>
+    </footer>
+
+    <script src="js/library.js"></script>
+</body>
+</html>
