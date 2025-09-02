@@ -212,16 +212,17 @@ def extract_toc_data(book):
                             title = title_text
                     
                     # Determine section type based on filename and title
-                    file_name = item.get_name().lower()
-                    if any(x in file_name for x in ['cubierta', 'titulo', 'autor', 'dedicatoria', 'sinopsis', 'info']):
+                    original_file_name = item.get_name()
+                    file_name_for_classification = original_file_name.lower()
+                    if any(x in file_name_for_classification for x in ['cubierta', 'titulo', 'autor', 'dedicatoria', 'sinopsis', 'info']):
                         section_type = "front_matter"
-                    elif 'notas' in file_name:
+                    elif 'notas' in file_name_for_classification:
                         section_type = "back_matter"
-                    elif file_name.startswith('section'):
+                    elif file_name_for_classification.startswith('section'):
                         section_type = "chapter"
-                        if not title or title == item.get_name():
+                        if not title or title == original_file_name:
                             # Extract chapter number from filename if possible
-                            match = re.search(r'section(\d+)', file_name)
+                            match = re.search(r'section(\d+)', file_name_for_classification)
                             if match:
                                 chapter_num = int(match.group(1))
                                 title = f"Capítulo {chapter_num}"
@@ -229,11 +230,11 @@ def extract_toc_data(book):
                                 title = f"Capítulo {i + 1}"
                     
                     if not title:
-                        title = item.get_name().replace('.xhtml', '').replace('.html', '').title()
+                        title = original_file_name.replace('.xhtml', '').replace('.html', '').title()
                     
                     toc_data.append({
                         'title': title,
-                        'href': item.get_name(),
+                        'href': original_file_name,
                         'id': item.get_id(),
                         'order': i,
                         'type': section_type
@@ -261,17 +262,18 @@ def extract_toc_data(book):
                         
                         if href and title:
                             # Extract filename for section type classification
-                            file_name = href.split('/')[-1].lower()  # Remove path prefix
+                            original_file_name = href.split('/')[-1]  # Remove path prefix but preserve case
+                            file_name_for_classification = original_file_name.lower()  # Only lowercase for classification
                             section_type = "chapter"  # Default type
                             
-                            # Determine section type and format title
+                            # Determine section type and format title (use lowercase for classification)
                             book_language = detect_book_language(book)
-                            section_type = classify_section_type(file_name, title, book_language)
+                            section_type = classify_section_type(file_name_for_classification, title, book_language)
                             title = format_chapter_title(title, book_language) if section_type == "chapter" else title
                             
                             toc_data.append({
                                 'title': title,
-                                'href': file_name,  # Use just the filename
+                                'href': original_file_name,  # Use original case for href
                                 'id': href.split('#')[0] if '#' in href else href,
                                 'order': i,
                                 'type': section_type
@@ -318,15 +320,16 @@ def extract_toc_data(book):
                             else:
                                 title = title_text
                         
-                        file_name = item.get_name().lower()
-                        if any(x in file_name for x in ['cubierta', 'titulo', 'autor', 'dedicatoria', 'sinopsis', 'info']):
+                        original_file_name = item.get_name()
+                        file_name_for_classification = original_file_name.lower()
+                        if any(x in file_name_for_classification for x in ['cubierta', 'titulo', 'autor', 'dedicatoria', 'sinopsis', 'info']):
                             section_type = "front_matter"
-                        elif 'notas' in file_name:
+                        elif 'notas' in file_name_for_classification:
                             section_type = "back_matter"
-                        elif file_name.startswith('section'):
+                        elif file_name_for_classification.startswith('section'):
                             section_type = "chapter"
-                            if not title or title == item.get_name():
-                                match = re.search(r'section(\d+)', file_name)
+                            if not title or title == original_file_name:
+                                match = re.search(r'section(\d+)', file_name_for_classification)
                                 if match:
                                     chapter_num = int(match.group(1))
                                     title = f"Capítulo {chapter_num}"
@@ -338,7 +341,7 @@ def extract_toc_data(book):
                         
                         toc_data.append({
                             'title': title,
-                            'href': item.get_name(),
+                            'href': original_file_name,
                             'id': item.get_id(),
                             'order': i,
                             'type': section_type
