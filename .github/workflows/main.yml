@@ -17,7 +17,12 @@ jobs:
           oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
           oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
           tags: tag:github-actions
-      
+
+      - name: Wait for Tailscale to be ready (optional)
+        run: |
+          until tailscale status --json | grep '"Self"'; do sleep 1; done
+          echo "Tailscale is up and connected."
+
       - name: Deploy via Tailscale SSH
         run: |
           ssh jason@coolify-server -- \
