@@ -18,12 +18,9 @@ jobs:
           oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
           tags: tag:github-actions
 
-      - name: Wait for Tailscale to be ready (optional)
-        run: |
-          until tailscale status --json | grep '"Self"'; do sleep 1; done
-          echo "Tailscale is up and connected."
-
       - name: Deploy via Tailscale SSH
         run: |
-          ssh jason@coolify-server -- \
-            'cd ~/EbookLanguageLearningTest/ && git clone https://github.com/JasonSteving99/EbookLanguageLearning.git'
+          ssh -o "StrictHostKeyChecking no" jason@coolify-server "
+            cd ~/EbookLanguageLearningTest/
+            git clone https://github.com/JasonSteving99/EbookLanguageLearning.git
+          "
