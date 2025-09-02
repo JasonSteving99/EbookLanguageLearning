@@ -15,15 +15,8 @@ jobs:
         uses: tailscale/github-action@v3
         with:
           authkey: ${{ secrets.TAILSCALE_GITHUB_ACTIONS_KEY }}
-
+      
       - name: Deploy via Tailscale SSH
-        uses: appleboy/ssh-action@master
-        with:
-          host: coolify-server
-          username: jason
-          script: |
-            # Change into the specific directory
-            cd /path/to/your/EbookLanguageLearningTest/
-            
-            # Pull the latest changes from the repo
-            git pull origin main
+        run: |
+          tailscale ssh jason@coolify-server -- \
+            'cd /path/to/your/EbookLanguageLearningTest/ && git pull origin main'
