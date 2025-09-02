@@ -447,6 +447,12 @@ def generate_book_structure(book, toc_data, book_id, document_count):
     return book_dir
 
 def main():
+    # Create necessary directories
+    os.makedirs('documents', exist_ok=True)
+    os.makedirs('images', exist_ok=True) 
+    os.makedirs('styles', exist_ok=True)
+    os.makedirs('data', exist_ok=True)
+    
     book = epub.read_epub('el_marciano.epub')
     
     print("=== EPUB METADATA ===")
@@ -626,9 +632,6 @@ def main():
     
     # Export word index and sentence data as JSON
     print(f"\n=== EXPORTING ENHANCED WORD DATA ===")
-    
-    # Create data directory
-    os.makedirs('data', exist_ok=True)
     
     # Export word index
     with open('data/word_index.json', 'w', encoding='utf-8') as f:
