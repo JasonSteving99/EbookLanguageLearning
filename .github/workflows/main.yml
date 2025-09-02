@@ -22,5 +22,12 @@ jobs:
         run: |
           ssh -o "StrictHostKeyChecking no" jason@coolify-server "
             cd ~/EbookLanguageLearningTest/
-            git clone https://github.com/JasonSteving99/EbookLanguageLearning.git
+            if [ -d "./EbookLanguageLearningTest" ]; then
+              echo "Directory exists. Pulling latest changes..."
+              cd EbookLanguageLearning
+              git pull origin main
+            else
+              echo "Directory does not exist. Cloning repository..."
+              git clone https://github.com/JasonSteving99/EbookLanguageLearning.git
+            fi
           "
