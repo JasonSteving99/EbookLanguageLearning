@@ -22,7 +22,7 @@ jobs:
         run: |
           ssh -o "StrictHostKeyChecking no" jason@coolify-server "
             cd ~/EbookLanguageLearningTest/
-            if [ -d "./EbookLanguageLearningTest" ]; then
+            if [ -d "./EbookLanguageLearning" ]; then
               echo "Directory exists. Pulling latest changes..."
               cd EbookLanguageLearning
               git pull origin main
