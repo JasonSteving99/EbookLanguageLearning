@@ -572,6 +572,12 @@ def main():
                 if soup.html:
                     soup.html.insert(0, head)
             
+            # Fix image paths - change Images/ to images/ (case sensitivity for Linux)
+            for img in soup.find_all('img'):
+                if img.get('src'):
+                    # Update src paths from Images/ to images/
+                    img['src'] = img['src'].replace('../Images/', '../images/')
+            
             # Add JavaScript for interactivity and navigation
             if soup.body:
                 # Add word interaction script
