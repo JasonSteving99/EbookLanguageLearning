@@ -1,0 +1,29 @@
+name: Git Pull Deployment (via Tailscale)
+
+on:
+  push:
+    branches:
+      - main # or your primary branch
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Connect to Tailscale network
+        uses: tailscale/github-action@v3
+        with:
+          authkey: ${{ secrets.TAILSCALE_GITHUB_ACTIONS_KEY }}
+
+      - name: Deploy via Tailscale SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: coolify-server
+          username: jason
+          script: |
+            # Change into the specific directory
+            cd /path/to/your/EbookLanguageLearningTest/
+            
+            # Pull the latest changes from the repo
+            git pull origin main
