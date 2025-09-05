@@ -154,14 +154,14 @@ body {
     transition: width 0.3s ease;
 }
 
-/* Example sentences */
-.example-sentences {
+/* Example paragraphs */
+.example-paragraphs {
     max-height: 300px;
     overflow-y: auto;
     margin-top: 15px;
 }
 
-.example-sentence {
+.example-paragraph {
     padding: 10px;
     margin: 10px 0;
     background: white;
@@ -171,14 +171,14 @@ body {
     line-height: 1.4;
 }
 
-.example-sentence .highlight {
+.example-paragraph .highlight {
     background-color: rgba(74, 144, 226, 0.3);
     font-weight: bold;
     padding: 1px 3px;
     border-radius: 3px;
 }
 
-.example-sentence .context {
+.example-paragraph .context {
     color: #6c757d;
     font-size: 12px;
     margin-top: 5px;

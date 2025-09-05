@@ -13,11 +13,11 @@ nlp = spacy.load("es_core_news_sm")
 print("Spanish model loaded successfully!")
 
 # Global data structures for word indexing
-word_index = {}  # word -> [sentence_ids]
-lemma_index = {}  # lemma -> [sentence_ids]
+word_index = {}  # word -> [paragraph_ids]
+lemma_index = {}  # lemma -> [paragraph_ids]
 word_to_lemma = {}  # word -> lemma
-sentences = {}   # sentence_id -> {text, file, paragraph, context}
-sentence_counter = 0
+paragraphs = {}   # paragraph_id -> {text, file, paragraph, context}
+paragraph_counter = 0
 
 # Configuration for different book types/languages
 BOOK_CONFIG = {
@@ -89,7 +89,7 @@ def generate_book_id(book):
         pass
     return 'book'  # Fallback
 
-def tokenize_text_with_spans(text, sentence_id, file_name):
+def tokenize_text_with_spans(text, paragraph_id, file_name):
     """
     Tokenize text using spaCy to extract words and lemmas, creating interactive spans
     """
@@ -114,14 +114,14 @@ def tokenize_text_with_spans(text, sentence_id, file_name):
             lemma_lower = token.lemma_.lower()
             
             # Create span for the word with both word and lemma data
-            span = f'<span class="word" data-word="{word_lower}" data-lemma="{lemma_lower}" data-sentence-id="{sentence_id}" data-position="{word_position}" data-file="{file_name}">{word_original}</span>'
+            span = f'<span class="word" data-word="{word_lower}" data-lemma="{lemma_lower}" data-paragraph-id="{paragraph_id}" data-position="{word_position}" data-file="{file_name}">{word_original}</span>'
             result.append(span)
             
             # Update word index
             if word_lower not in word_index:
                 word_index[word_lower] = []
             word_index[word_lower].append({
-                'sentence_id': sentence_id,
+                'paragraph_id': paragraph_id,
                 'position': word_position,
                 'file': file_name,
                 'original': word_original,
@@ -132,7 +132,7 @@ def tokenize_text_with_spans(text, sentence_id, file_name):
             if lemma_lower not in lemma_index:
                 lemma_index[lemma_lower] = []
             lemma_index[lemma_lower].append({
-                'sentence_id': sentence_id,
+                'paragraph_id': paragraph_id,
                 'position': word_position,
                 'file': file_name,
                 'word': word_lower,
@@ -155,23 +155,23 @@ def tokenize_text_with_spans(text, sentence_id, file_name):
     
     return ''.join(result)
 
-def process_text_nodes(element, sentence_id, file_name):
+def process_text_nodes(element, paragraph_id, file_name):
     """
     Process all text nodes in an element, wrapping words with spans
     """
-    global sentence_counter
+    global paragraph_counter
     
     # Process direct text nodes
     for child in list(element.children):
         if isinstance(child, NavigableString):
             if child.strip():  # Only process non-empty text
-                wrapped_text = tokenize_text_with_spans(str(child), sentence_id, file_name)
+                wrapped_text = tokenize_text_with_spans(str(child), paragraph_id, file_name)
                 # Replace the text node with the wrapped version
                 soup_fragment = BeautifulSoup(wrapped_text, 'html.parser')
                 child.replace_with(*soup_fragment.contents)
         elif hasattr(child, 'children'):
             # Recursively process child elements
-            process_text_nodes(child, sentence_id, file_name)
+            process_text_nodes(child, paragraph_id, file_name)
 
 
 def extract_toc_data(book):
@@ -497,26 +497,25 @@ def main():
             soup = BeautifulSoup(content, 'html.parser')
             
             # Process paragraphs and add word wrapping
-            global sentence_counter
-            paragraphs = soup.find_all('p')
+            global paragraph_counter
+            paragraph_elements = soup.find_all('p')
             
-            for p_index, paragraph in enumerate(paragraphs):
-                # Create sentence ID and store paragraph metadata
-                sentence_id = f"{file_name}_{p_index}"
-                paragraph_text = paragraph.get_text()
+            for p_index, paragraph_element in enumerate(paragraph_elements):
+                # Create paragraph ID and store paragraph metadata
+                paragraph_id = f"{file_name}_{p_index}"
+                paragraph_text = paragraph_element.get_text()
                 
-                # Store sentence metadata
-                sentences[sentence_id] = {
+                # Store paragraph metadata
+                paragraphs[paragraph_id] = {
                     'text': paragraph_text,
                     'file': file_name,
                     'paragraph': p_index,
-                    'context': paragraph_text[:100] + ('...' if len(paragraph_text) > 100 else ''),
-                    'classes': paragraph.get('class', [])
+                    'classes': paragraph_element.get('class', [])
                 }
                 
                 # Process text nodes in this paragraph
-                process_text_nodes(paragraph, sentence_id, file_name)
-                sentence_counter += 1
+                process_text_nodes(paragraph_element, paragraph_id, file_name)
+                paragraph_counter += 1
             
             # Add CSS link to head
             if soup.head:
@@ -637,7 +636,7 @@ def main():
     print(f"Total stylesheets exported: {style_count}")
     print(f"Total unique words indexed: {len(word_index)}")
     print(f"Total unique lemmas indexed: {len(lemma_index)}")
-    print(f"Total sentences processed: {len(sentences)}")
+    print(f"Total paragraphs processed: {len(paragraphs)}")
     
     # Export word index and sentence data as JSON
     print(f"\n=== EXPORTING ENHANCED WORD DATA ===")
@@ -657,10 +656,10 @@ def main():
         json.dump(word_to_lemma, f, ensure_ascii=False, indent=2)
     print(f"Word-to-lemma mapping exported to data/word_to_lemma.json")
     
-    # Export sentences
-    with open('data/sentences.json', 'w', encoding='utf-8') as f:
-        json.dump(sentences, f, ensure_ascii=False, indent=2)
-    print(f"Sentence data exported to data/sentences.json")
+    # Export paragraphs
+    with open('data/paragraphs.json', 'w', encoding='utf-8') as f:
+        json.dump(paragraphs, f, ensure_ascii=False, indent=2)
+    print(f"Paragraph data exported to data/paragraphs.json")
     
     # Export word frequency stats
     word_freq = {word: len(occurrences) for word, occurrences in word_index.items()}

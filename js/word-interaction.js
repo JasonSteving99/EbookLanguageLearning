@@ -6,7 +6,7 @@ class WordLearningApp {
         this.lemmaIndex = {};
         this.wordToLemma = {};
         this.wordFamilies = {};
-        this.sentences = {};
+        this.paragraphs = {};
         this.currentSelectedWord = null;
         this.currentSelectedLemma = null;
         this.sidebar = null;
@@ -43,9 +43,9 @@ class WordLearningApp {
             const familiesResponse = await fetch('../data/word_families.json');
             this.wordFamilies = await familiesResponse.json();
             
-            // Load sentences
-            const sentencesResponse = await fetch('../data/sentences.json');
-            this.sentences = await sentencesResponse.json();
+            // Load paragraphs
+            const paragraphsResponse = await fetch('../data/paragraphs.json');
+            this.paragraphs = await paragraphsResponse.json();
             
             console.log('Enhanced data loaded successfully');
         } catch (error) {
@@ -55,7 +55,7 @@ class WordLearningApp {
             this.lemmaIndex = {};
             this.wordToLemma = {};
             this.wordFamilies = {};
-            this.sentences = {};
+            this.paragraphs = {};
         }
     }
     
@@ -126,7 +126,7 @@ class WordLearningApp {
     handleWordClick(wordElement) {
         const word = wordElement.dataset.word;
         const lemma = wordElement.dataset.lemma || this.wordToLemma[word] || word;
-        const sentenceId = wordElement.dataset.sentenceId;
+        const paragraphId = wordElement.dataset.paragraphId;
         
         // Clear previous selection
         this.clearWordSelection();
@@ -141,7 +141,7 @@ class WordLearningApp {
         this.highlightLemmaInstances(lemma);
         
         // Update sidebar
-        this.updateSidebar(word, lemma, sentenceId);
+        this.updateSidebar(word, lemma, paragraphId);
         
         // Open sidebar
         this.openSidebar();
@@ -176,11 +176,11 @@ class WordLearningApp {
         });
     }
     
-    updateSidebar(word, lemma, currentSentenceId) {
+    updateSidebar(word, lemma, currentParagraphId) {
         const wordData = this.wordIndex[word] || [];
         const lemmaData = this.lemmaIndex[lemma] || [];
         const wordFamily = this.wordFamilies[lemma] || {};
-        const currentSentence = this.sentences[currentSentenceId];
+        const currentParagraph = this.paragraphs[currentParagraphId];
         
         const wordFrequency = wordData.length;
         const lemmaFrequency = lemmaData.length;
@@ -282,8 +282,8 @@ class WordLearningApp {
         
         // Current context section
         const contextSection = this.createWordInfoSection('Contexto Actual');
-        const contextSentence = this.createExampleSentence(currentSentence.text, word, currentSentence.file);
-        contextSection.appendChild(contextSentence);
+        const contextParagraph = this.createExampleParagraph(currentParagraph.text, word, currentParagraph.file);
+        contextSection.appendChild(contextParagraph);
         sidebarContent.appendChild(contextSection);
         
         // Other examples section
@@ -296,14 +296,14 @@ class WordLearningApp {
         clipboardBtn.className = 'clipboard-btn';
         clipboardBtn.innerHTML = '📋';
         clipboardBtn.title = 'Copiar ejemplos para ChatGPT';
-        clipboardBtn.onclick = () => this.copyExamplesToClipboard(lemma, word, currentSentenceId);
+        clipboardBtn.onclick = () => this.copyExamplesToClipboard(lemma, word, currentParagraphId);
         examplesHeader.appendChild(clipboardBtn);
         
         const examplesContainer = document.createElement('div');
-        examplesContainer.className = 'example-sentences';
+        examplesContainer.className = 'example-paragraphs';
         
         // Always show word family examples
-        this.addLemmaExampleSentences(examplesContainer, lemma, currentSentenceId);
+        this.addLemmaExampleParagraphs(examplesContainer, lemma, currentParagraphId);
         
         examplesSection.appendChild(examplesContainer);
         sidebarContent.appendChild(examplesSection);
@@ -321,30 +321,30 @@ class WordLearningApp {
         });
     }
     
-    addLemmaExampleSentences(container, lemma, excludeSentenceId) {
+    addLemmaExampleParagraphs(container, lemma, excludeParagraphId) {
         const lemmaData = this.lemmaIndex[lemma] || [];
         
         // Get up to 8 different examples from word family
-        const sentenceIds = [...new Set(lemmaData.map(item => item.sentence_id))]
-            .filter(id => id !== excludeSentenceId)
+        const paragraphIds = [...new Set(lemmaData.map(item => item.paragraph_id))]
+            .filter(id => id !== excludeParagraphId)
             .slice(0, 8);
         
-        if (sentenceIds.length === 0) {
+        if (paragraphIds.length === 0) {
             const noExamples = document.createElement('p');
             noExamples.textContent = 'No se encontraron otros ejemplos.';
             container.appendChild(noExamples);
             return;
         }
         
-        sentenceIds.forEach(sentenceId => {
-            const sentence = this.sentences[sentenceId];
-            if (sentence) {
-                // Find which word form appears in this sentence
-                const wordsInSentence = lemmaData.filter(item => item.sentence_id === sentenceId);
-                const wordForm = wordsInSentence.length > 0 ? wordsInSentence[0].word : lemma;
+        paragraphIds.forEach(paragraphId => {
+            const paragraph = this.paragraphs[paragraphId];
+            if (paragraph) {
+                // Find which word form appears in this paragraph
+                const wordsInParagraph = lemmaData.filter(item => item.paragraph_id === paragraphId);
+                const wordForm = wordsInParagraph.length > 0 ? wordsInParagraph[0].word : lemma;
                 
-                const exampleSentence = this.createExampleSentence(sentence.text, wordForm, sentence.file);
-                container.appendChild(exampleSentence);
+                const exampleParagraph = this.createExampleParagraph(paragraph.text, wordForm, paragraph.file);
+                container.appendChild(exampleParagraph);
             }
         });
     }
@@ -360,20 +360,20 @@ class WordLearningApp {
         return section;
     }
     
-    createExampleSentence(sentenceText, targetWord, fileName) {
-        const sentenceDiv = document.createElement('div');
-        sentenceDiv.className = 'example-sentence';
+    createExampleParagraph(paragraphText, targetWord, fileName) {
+        const paragraphDiv = document.createElement('div');
+        paragraphDiv.className = 'example-paragraph';
         
-        // Highlight the target word in the sentence
-        const highlightedText = this.highlightWordInText(sentenceText, targetWord);
-        sentenceDiv.appendChild(highlightedText);
+        // Highlight the target word in the paragraph
+        const highlightedText = this.highlightWordInText(paragraphText, targetWord);
+        paragraphDiv.appendChild(highlightedText);
         
         const context = document.createElement('div');
         context.className = 'context';
         context.textContent = 'De: ' + fileName;
-        sentenceDiv.appendChild(context);
+        paragraphDiv.appendChild(context);
         
-        return sentenceDiv;
+        return paragraphDiv;
     }
     
     highlightWordInText(text, targetWord) {
@@ -426,26 +426,26 @@ class WordLearningApp {
         return container;
     }
     
-    addExampleSentences(container, word, excludeSentenceId) {
+    addExampleParagraphs(container, word, excludeParagraphId) {
         const wordData = this.wordIndex[word] || [];
         
         // Get up to 5 different examples
-        const sentenceIds = [...new Set(wordData.map(item => item.sentence_id))]
-            .filter(id => id !== excludeSentenceId)
+        const paragraphIds = [...new Set(wordData.map(item => item.paragraph_id))]
+            .filter(id => id !== excludeParagraphId)
             .slice(0, 5);
         
-        if (sentenceIds.length === 0) {
+        if (paragraphIds.length === 0) {
             const noExamples = document.createElement('p');
             noExamples.textContent = 'No se encontraron otros ejemplos.';
             container.appendChild(noExamples);
             return;
         }
         
-        sentenceIds.forEach(sentenceId => {
-            const sentence = this.sentences[sentenceId];
-            if (sentence) {
-                const exampleSentence = this.createExampleSentence(sentence.text, word, sentence.file);
-                container.appendChild(exampleSentence);
+        paragraphIds.forEach(paragraphId => {
+            const paragraph = this.paragraphs[paragraphId];
+            if (paragraph) {
+                const exampleParagraph = this.createExampleParagraph(paragraph.text, word, paragraph.file);
+                container.appendChild(exampleParagraph);
             }
         });
     }
@@ -494,23 +494,23 @@ class WordLearningApp {
         return learnedWords.includes(word);
     }
     
-    copyExamplesToClipboard(lemma, word, currentSentenceId) {
+    copyExamplesToClipboard(lemma, word, currentParagraphId) {
         try {
-            // Get all sentence examples for this lemma (not just displayed ones)
+            // Get all paragraph examples for this lemma (not just displayed ones)
             const lemmaData = this.lemmaIndex[lemma] || [];
             const wordFamily = this.wordFamilies[lemma] || {};
             const wordForms = wordFamily.forms || [word];
             
-            // Get all unique sentence IDs
-            const allSentenceIds = [...new Set(lemmaData.map(item => item.sentence_id))];
+            // Get all unique paragraph IDs
+            const allParagraphIds = [...new Set(lemmaData.map(item => item.paragraph_id))];
             
-            // Create example sentences list
+            // Create example paragraphs list
             const examples = [];
-            allSentenceIds.forEach(sentenceId => {
-                const sentence = this.sentences[sentenceId];
-                if (sentence) {
+            allParagraphIds.forEach(paragraphId => {
+                const paragraph = this.paragraphs[paragraphId];
+                if (paragraph) {
                     // Clean the text of HTML markup
-                    const cleanText = sentence.text.replace(/<[^>]*>/g, '');
+                    const cleanText = paragraph.text.replace(/<[^>]*>/g, '');
                     examples.push(`• ${cleanText}`);
                 }
             });
