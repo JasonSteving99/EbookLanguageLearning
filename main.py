@@ -18,6 +18,8 @@ lemma_index = {}  # lemma -> [paragraph_ids]
 word_to_lemma = {}  # word -> lemma
 paragraphs = {}   # paragraph_id -> {text, file, paragraph, context}
 paragraph_counter = 0
+sentences = {}    # sentence_id -> {text, paragraph_id, file, sentence_index}
+sentence_counter = 0
 
 # Configuration for different book types/languages
 BOOK_CONFIG = {
@@ -92,11 +94,23 @@ def generate_book_id(book):
 def tokenize_text_with_spans(text, paragraph_id, file_name):
     """
     Tokenize text using spaCy to extract words and lemmas, creating interactive spans
+    Also extracts sentences using spaCy's sentence segmentation
     """
-    global nlp, word_index, lemma_index, word_to_lemma
+    global nlp, word_index, lemma_index, word_to_lemma, sentences, sentence_counter
     
     # Process text with spaCy
     doc = nlp(text)
+    
+    # Extract sentences from this paragraph
+    for sent_idx, sent in enumerate(doc.sents):
+        sentence_id = f"{paragraph_id}_s{sent_idx}"
+        sentences[sentence_id] = {
+            'text': sent.text.strip(),
+            'paragraph_id': paragraph_id,
+            'file': file_name,
+            'sentence_index': sent_idx
+        }
+        sentence_counter += 1
     
     result = []
     last_end = 0
@@ -637,6 +651,7 @@ def main():
     print(f"Total unique words indexed: {len(word_index)}")
     print(f"Total unique lemmas indexed: {len(lemma_index)}")
     print(f"Total paragraphs processed: {len(paragraphs)}")
+    print(f"Total sentences processed: {len(sentences)}")
     
     # Export word index and sentence data as JSON
     print(f"\n=== EXPORTING ENHANCED WORD DATA ===")
@@ -660,6 +675,11 @@ def main():
     with open('data/paragraphs.json', 'w', encoding='utf-8') as f:
         json.dump(paragraphs, f, ensure_ascii=False, indent=2)
     print(f"Paragraph data exported to data/paragraphs.json")
+    
+    # Export sentences
+    with open('data/sentences.json', 'w', encoding='utf-8') as f:
+        json.dump(sentences, f, ensure_ascii=False, indent=2)
+    print(f"Sentence data exported to data/sentences.json")
     
     # Export word frequency stats
     word_freq = {word: len(occurrences) for word, occurrences in word_index.items()}
