@@ -597,6 +597,10 @@ def main():
                 word_script = soup.new_tag('script', src='../js/word-interaction.js')
                 soup.body.append(word_script)
                 
+                # Add chat modal script
+                chat_script = soup.new_tag('script', src='../js/chat-modal.js')
+                soup.body.append(chat_script)
+                
                 # Add chapter navigation script
                 nav_script = soup.new_tag('script', src='../js/chapter-navigation.js')
                 soup.body.append(nav_script)

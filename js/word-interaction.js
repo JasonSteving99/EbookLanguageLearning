@@ -280,24 +280,34 @@ class WordLearningApp {
             sidebarContent.appendChild(familySection);
         }
         
-        // Current context section
-        const contextSection = this.createWordInfoSection('Contexto Actual');
-        const contextParagraph = this.createExampleParagraph(currentParagraph.text, word, currentParagraph.file);
-        contextSection.appendChild(contextParagraph);
-        sidebarContent.appendChild(contextSection);
+        // Current context section (only if we have a valid paragraph)
+        if (currentParagraph && currentParagraph.text) {
+            const contextSection = this.createWordInfoSection('Contexto Actual');
+            const contextParagraph = this.createExampleParagraph(currentParagraph.text, word, currentParagraph.file);
+            contextSection.appendChild(contextParagraph);
+            sidebarContent.appendChild(contextSection);
+        } else if (currentParagraphId === 'chat-context') {
+            // Special case for chat context
+            const contextSection = this.createWordInfoSection('Contexto de Chat');
+            const chatNote = document.createElement('p');
+            chatNote.textContent = 'Palabra encontrada en conversación de chat';
+            chatNote.className = 'chat-context-note';
+            contextSection.appendChild(chatNote);
+            sidebarContent.appendChild(contextSection);
+        }
         
         // Other examples section
         const examplesTitle = 'Todos los Ejemplos de la Familia';
         const examplesSection = this.createWordInfoSection(examplesTitle);
         
-        // Add clipboard button to examples section header
+        // Add chat button to examples section header
         const examplesHeader = examplesSection.querySelector('h3');
-        const clipboardBtn = document.createElement('button');
-        clipboardBtn.className = 'clipboard-btn';
-        clipboardBtn.innerHTML = '📋';
-        clipboardBtn.title = 'Copiar ejemplos para ChatGPT';
-        clipboardBtn.onclick = () => this.copyExamplesToClipboard(lemma, word, currentParagraphId);
-        examplesHeader.appendChild(clipboardBtn);
+        const chatBtn = document.createElement('button');
+        chatBtn.className = 'chat-btn';
+        chatBtn.innerHTML = '💬';
+        chatBtn.title = 'Conversar sobre esta palabra';
+        chatBtn.onclick = () => this.openWordChat(word);
+        examplesHeader.appendChild(chatBtn);
         
         const examplesContainer = document.createElement('div');
         examplesContainer.className = 'example-paragraphs';
@@ -494,87 +504,15 @@ class WordLearningApp {
         return learnedWords.includes(word);
     }
     
-    copyExamplesToClipboard(lemma, word, currentParagraphId) {
-        try {
-            // Get all paragraph examples for this lemma (not just displayed ones)
-            const lemmaData = this.lemmaIndex[lemma] || [];
-            const wordFamily = this.wordFamilies[lemma] || {};
-            const wordForms = wordFamily.forms || [word];
-            
-            // Get all unique paragraph IDs
-            const allParagraphIds = [...new Set(lemmaData.map(item => item.paragraph_id))];
-            
-            // Create example paragraphs list
-            const examples = [];
-            allParagraphIds.forEach(paragraphId => {
-                const paragraph = this.paragraphs[paragraphId];
-                if (paragraph) {
-                    // Clean the text of HTML markup
-                    const cleanText = paragraph.text.replace(/<[^>]*>/g, '');
-                    examples.push(`• ${cleanText}`);
-                }
-            });
-            
-            // Create the LLM prompt
-            const wordFormsText = wordForms.length > 1 ? wordForms.join(', ') : word;
-            const prompt = `Soy estudiante de español y estoy aprendiendo por inmersión total. Estoy tratando de entender intuitivamente la palabra "${lemma}" y sus formas (${wordFormsText}) sin recibir definiciones directas en inglés.
-
-Aquí tienes ejemplos de cómo se usa esta palabra en contexto:
-
-${examples.join('\n')}
-
-Responde SOLAMENTE en español, usando un español sencillo. Aunque puedes ayudarme con explicaciones directas si es necesario, prefiero liderar el descubrimiento. No respondas a estas instrucciones - simplemente pregúntame directamente qué pienso que significa esta palabra "${lemma}".`;
-            
-            // Copy to clipboard
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(prompt).then(() => {
-                    this.showClipboardFeedback(true);
-                }).catch(() => {
-                    this.fallbackCopyToClipboard(prompt);
-                });
-            } else {
-                this.fallbackCopyToClipboard(prompt);
-            }
-        } catch (error) {
-            console.error('Error copying to clipboard:', error);
-            this.showClipboardFeedback(false);
+    openWordChat(word) {
+        // Open the chat modal for this word
+        if (window.chatModal) {
+            window.chatModal.open(word);
+        } else {
+            console.error('Chat modal not available');
         }
     }
     
-    fallbackCopyToClipboard(text) {
-        const textArea = document.createElement('textarea');
-        textArea.value = text;
-        textArea.style.position = 'fixed';
-        textArea.style.left = '-999999px';
-        textArea.style.top = '-999999px';
-        document.body.appendChild(textArea);
-        textArea.focus();
-        textArea.select();
-        
-        try {
-            const successful = document.execCommand('copy');
-            this.showClipboardFeedback(successful);
-        } catch (err) {
-            console.error('Fallback copy failed:', err);
-            this.showClipboardFeedback(false);
-        }
-        
-        document.body.removeChild(textArea);
-    }
-    
-    showClipboardFeedback(success) {
-        const btn = document.querySelector('.clipboard-btn');
-        if (btn) {
-            const originalText = btn.innerHTML;
-            btn.innerHTML = success ? '✅' : '❌';
-            btn.disabled = true;
-            
-            setTimeout(() => {
-                btn.innerHTML = originalText;
-                btn.disabled = false;
-            }, 1500);
-        }
-    }
     
     getWordStats() {
         return {
@@ -589,7 +527,6 @@ Responde SOLAMENTE en español, usando un español sencillo. Aunque puedes ayuda
 let wordApp;
 document.addEventListener('DOMContentLoaded', () => {
     wordApp = new WordLearningApp();
+    // Expose globally after initialization
+    window.wordApp = wordApp;
 });
-
-// Expose globally for debugging
-window.wordApp = wordApp;

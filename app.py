@@ -3,10 +3,13 @@ import os
 import time
 
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
+from pydantic import BaseModel
 from prometheus_fastapi_instrumentator import Instrumentator
 from prometheus_fastapi_instrumentator.metrics import Info
 from prometheus_client import Counter, Histogram
+
+from chat.routes import router as chat_router
 
 app = FastAPI()
 
@@ -27,6 +30,9 @@ def track_file_metrics(info: Info):
 instrumentator = Instrumentator()
 instrumentator.add(track_file_metrics)
 instrumentator.instrument(app).expose(app)
+
+# Include chat router
+app.include_router(chat_router)
 
 # Handle all requests including root
 @app.get("/{full_path:path}")
